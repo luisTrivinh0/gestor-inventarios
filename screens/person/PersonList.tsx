@@ -1,27 +1,52 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, FlatList, TouchableOpacity, TextInput, Alert } from 'react-native';
 import { FontAwesome, MaterialIcons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 
 const PersonList = ({ navigation }) => {
-    const pessoasExemplo = [
-        { id: '1', nome: 'João Silva', documento: '123.456.789-00', created_at: '12/12/2024' },
-        { id: '2', nome: 'Maria Oliveira', documento: '987.654.321-00', created_at: '12/12/2024' },
-        { id: '3', nome: 'Carlos Souza', documento: '456.789.123-00', created_at: '12/12/2024' },
-    ];
-
-    const [pessoasFiltradas, setPessoasFiltradas] = useState(pessoasExemplo);
+    const [pessoasFiltradas, setPessoasFiltradas] = useState([]);
     const [startDate, setStartDate] = useState(null);
     const [endDate, setEndDate] = useState(null);
     const [showStartDatePicker, setShowStartDatePicker] = useState(false);
     const [showEndDatePicker, setShowEndDatePicker] = useState(false);
 
-    const handleEdit = (id) => {
-        navigation.navigate('PersonForm', { pessoaId: id });
+    // Função para buscar as pessoas da API
+    const fetchPessoas = async () => {
+        try {
+            const response = await fetch('http://localhost:8080/persons/');            
+            const data = await response.json();
+            console.log(data);
+            setPessoasFiltradas(data);
+        } catch (error) {
+            Alert.alert('Erro', 'Não foi possível carregar as pessoas.');
+        }
     };
 
-    const handleDelete = (id) => {
-        console.log(`Excluir pessoa com ID: ${id}`);
+    // UseEffect para carregar as pessoas quando o componente for montado
+    useEffect(() => {
+        fetchPessoas();
+    }, []);
+
+    const handleEdit = (id) => {
+        navigation.navigate('PersonForm', { personId: id });
+    };
+
+    const handleDelete = async (id) => {
+        try {
+            const response = await fetch(`http://localhost:8080/persons/${id}`, {
+                method: 'DELETE',
+            });
+            const result = await response.json();
+
+            if (response.ok) {
+                Alert.alert('Sucesso', result.message);
+                fetchPessoas(); // Recarrega a lista após a exclusão
+            } else {
+                Alert.alert('Erro', result.detail || 'Erro ao excluir pessoa');
+            }
+        } catch (error) {
+            Alert.alert('Erro', 'Não foi possível excluir a pessoa.');
+        }
     };
 
     const handleAdd = () => {
@@ -47,7 +72,7 @@ const PersonList = ({ navigation }) => {
     };
 
     const handleFilter = () => {
-        let filtered = pessoasExemplo;
+        let filtered = pessoasFiltradas;
 
         if (startDate) {
             filtered = filtered.filter(person => new Date(person.created_at) >= startDate);
@@ -62,9 +87,9 @@ const PersonList = ({ navigation }) => {
 
     const renderItem = ({ item }) => (
         <View className="border border-gray-300 p-4 pb-8 mb-4 rounded-lg relative">
-            <Text className="text-lg font-bold">{item.nome}</Text>
-            <Text className="text-sm text-gray-500">Documento: {item.documento}</Text>
-            <Text className="text-sm text-gray-500">Cadastrado em: {item.created_at}</Text>
+            <Text className="text-lg font-bold">{item.name}</Text>
+            <Text className="text-sm text-gray-500">Documento: {item.document}</Text>
+            <Text className="text-sm text-gray-500">Cadastrado em: {new Date(item.created_at).toLocaleDateString()}</Text>
             <TouchableOpacity
                 onPress={() => handleEdit(item.id)}
                 className="absolute top-2 right-2 p-2 bg-green-500 rounded-full"
@@ -126,7 +151,7 @@ const PersonList = ({ navigation }) => {
 
             <FlatList
                 data={pessoasFiltradas}
-                keyExtractor={(item) => item.id}
+                keyExtractor={(item) => item.id.toString()}
                 renderItem={renderItem}
                 ListEmptyComponent={
                     <Text className="text-center text-gray-500">Nenhuma pessoa encontrada.</Text>
