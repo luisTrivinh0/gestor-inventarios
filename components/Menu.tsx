@@ -9,14 +9,14 @@ const Menu = [
         ],
     },
     {
-        title: "Inventários",
-        icon: "clipboard",
-        route: "InventoryScreen",
-    },
-    {
         title: "Logs",
         icon: "newspaper",
         route: "Logs",
+    },
+        {
+        title: "Importar Dados",
+        icon: "book",
+        route: "ImportCSV",
     },
     {
         title: "Sair",

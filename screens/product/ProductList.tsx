@@ -2,13 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, FlatList, TouchableOpacity, Alert } from 'react-native';
 import { FontAwesome, MaterialIcons } from '@expo/vector-icons';
 
+import { useFocusEffect } from '@react-navigation/native';
+
 const ProductList = ({ navigation }) => {
     const [produtos, setProdutos] = useState([]);
 
     // Função para buscar os produtos da API
     const fetchProducts = async () => {
         try {
-            const response = await fetch('http://localhost:8080/products/');
+            const response = await fetch('http://localhost:8000/api/products'); // Use 10.0.2.2 para Android
             const data = await response.json();
             setProdutos(data);
         } catch (error) {
@@ -16,24 +18,22 @@ const ProductList = ({ navigation }) => {
         }
     };
 
-    // UseEffect para carregar os produtos quando o componente for montado
-    useEffect(() => {
-        fetchProducts();
-    }, []);
-
-    const handleEdit = (id) => {
-        navigation.navigate('ProductForm', { id });
-    };
+    // Atualiza a lista toda vez que a tela entra em foco
+    useFocusEffect(
+        React.useCallback(() => {
+            fetchProducts();
+        }, [])
+    );
 
     const handleDelete = async (id) => {
         try {
-            const response = await fetch(`http://localhost:8080/products/${id}`, {
+            const response = await fetch(`http://localhost:8000/api/products/${id}`, {
                 method: 'DELETE',
             });
             const result = await response.json();
 
             if (response.ok) {
-                Alert.alert('Sucesso', result.message);
+                Alert.alert('Sucesso', 'Produto excluído com sucesso!');
                 fetchProducts(); // Recarrega a lista após a exclusão
             } else {
                 Alert.alert('Erro', result.error || 'Erro ao excluir produto');
@@ -43,9 +43,13 @@ const ProductList = ({ navigation }) => {
         }
     };
 
+    const handleEdit = (id) => {
+        navigation.navigate('ProductForm', { productId: id });
+    };
+
     const renderItem = ({ item }) => (
         <View className="border border-gray-300 p-4 mb-4 rounded-lg relative">
-            <Text className="text-lg font-bold">{item.name}</Text>
+            <Text className="text-lg font-bold">{item.id} - {item.name}</Text>
             <Text className="text-sm text-gray-500">Descrição: {item.description}</Text>
             <Text className="text-sm text-gray-500">Código: {item.code}</Text>
             <Text className="text-sm text-gray-500">Marca: {item.brand}</Text>
@@ -84,5 +88,6 @@ const ProductList = ({ navigation }) => {
         </View>
     );
 };
+
 
 export default ProductList;

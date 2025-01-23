@@ -1,38 +1,77 @@
-import React, { useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, TextInput, Alert } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, FlatList, TouchableOpacity, Alert } from 'react-native';
 import { FontAwesome, MaterialIcons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import { useFocusEffect } from '@react-navigation/native';
 
 const AreaList = ({ navigation }) => {
-    const areasExemplo = [
-        { id: '1', nome: 'Área 1', entrada: 'Porta A', saida: 'Porta B', created_at: '12/12/2024' },
-        { id: '2', nome: 'Área 2', entrada: 'Porta B', saida: 'Porta A', created_at: '15/12/2024' },
-        { id: '3', nome: 'Área 3', entrada: 'Porta A', saida: 'Porta A', created_at: '18/12/2024' },
-    ];
-
-    const [areasFiltradas, setAreasFiltradas] = useState(areasExemplo);
+    const [areas, setAreas] = useState([]);
+    const [filteredAreas, setFilteredAreas] = useState([]);
     const [startDate, setStartDate] = useState(null);
     const [endDate, setEndDate] = useState(null);
     const [showStartDatePicker, setShowStartDatePicker] = useState(false);
     const [showEndDatePicker, setShowEndDatePicker] = useState(false);
 
-    const handleEdit = (id) => {
-        navigation.navigate('AreaForm', { areaId: id });
+    // Função para buscar as áreas da API
+    const fetchAreas = async () => {
+        try {
+            const response = await fetch('http://localhost:8000/api/areas');
+            const data = await response.json();
+            setAreas(data);
+            setFilteredAreas(data); // Inicia com todas as áreas
+        } catch (error) {
+            Alert.alert('Erro', 'Não foi possível carregar as áreas.');
+        }
     };
 
-    const handleDelete = (id) => {
-        console.log(`Excluir área com ID: ${id}`);
+    // UseEffect para carregar as áreas ao montar o componente
+    useFocusEffect(
+        React.useCallback(() => {
+            fetchAreas();
+        }, [])
+    );
+
+
+    // Função para deletar uma área
+    const handleDelete = async (id) => {
+        try {
+            const response = await fetch(`http://localhost:8000/api/areas/${id}`, {
+                method: 'DELETE',
+            });
+
+            if (response.ok) {
+                Alert.alert('Sucesso', 'Área excluída com sucesso!');
+                fetchAreas(); // Recarrega as áreas após a exclusão
+            } else {
+                Alert.alert('Erro', 'Erro ao excluir a área.');
+            }
+        } catch (error) {
+            Alert.alert('Erro', 'Não foi possível excluir a área.');
+        }
     };
 
-    const handleAdd = () => {
-        navigation.navigate('AreaForm');
+    // Função para aplicar os filtros por data
+    const handleFilter = () => {
+        let filtered = areas;
+
+        if (startDate) {
+            filtered = filtered.filter(
+                (area) => new Date(area.created_at) >= startDate
+            );
+        }
+
+        if (endDate) {
+            filtered = filtered.filter(
+                (area) => new Date(area.created_at) <= endDate
+            );
+        }
+
+        setFilteredAreas(filtered);
     };
 
     const handleStartDateChange = (event, selectedDate) => {
         setShowStartDatePicker(false);
-        if (selectedDate) {
-            setStartDate(selectedDate);
-        }
+        if (selectedDate) setStartDate(selectedDate);
     };
 
     const handleEndDateChange = (event, selectedDate) => {
@@ -46,28 +85,16 @@ const AreaList = ({ navigation }) => {
         }
     };
 
-    const handleFilter = () => {
-        let filtered = areasExemplo;
-
-        if (startDate) {
-            filtered = filtered.filter(area => new Date(area.created_at) >= startDate);
-        }
-
-        if (endDate) {
-            filtered = filtered.filter(area => new Date(area.created_at) <= endDate);
-        }
-
-        setAreasFiltradas(filtered);
-    };
-
     const renderItem = ({ item }) => (
         <View className="border border-gray-300 p-4 pb-12 mb-4 rounded-lg relative">
-            <Text className="text-lg font-bold">{item.nome}</Text>
-            <Text className="text-sm text-gray-500">Entrada: {item.entrada}</Text>
-            <Text className="text-sm text-gray-500">Saída: {item.saida}</Text>
-            <Text className="text-sm text-gray-500">Cadastrado em: {item.created_at}</Text>
+            <Text className="text-lg font-bold">{item.id} - {item.name}</Text>
+            <Text className="text-sm text-gray-500">Entrada: {item.entry_point}</Text>
+            <Text className="text-sm text-gray-500">Saída: {item.exit_point}</Text>
+            <Text className="text-sm text-gray-500">
+                Cadastrado em: {new Date(item.created_at).toLocaleDateString('pt-BR')}
+            </Text>
             <TouchableOpacity
-                onPress={() => handleEdit(item.id)}
+                onPress={() => navigation.navigate('AreaForm', { areaId: item.id })}
                 className="absolute top-2 right-2 p-2 bg-green-500 rounded-full"
             >
                 <FontAwesome name="edit" size={20} color="#fff" />
@@ -126,8 +153,8 @@ const AreaList = ({ navigation }) => {
             </TouchableOpacity>
 
             <FlatList
-                data={areasFiltradas}
-                keyExtractor={(item) => item.id}
+                data={filteredAreas}
+                keyExtractor={(item) => item.id.toString()}
                 renderItem={renderItem}
                 ListEmptyComponent={
                     <Text className="text-center text-gray-500">Nenhuma área encontrada.</Text>
@@ -135,7 +162,7 @@ const AreaList = ({ navigation }) => {
             />
 
             <TouchableOpacity
-                onPress={handleAdd}
+                onPress={() => navigation.navigate('AreaForm')}
                 className="bg-blue-500 p-4 rounded-full mt-4 flex-row justify-center items-center"
             >
                 <MaterialIcons name="person-add" size={20} color="#fff" />

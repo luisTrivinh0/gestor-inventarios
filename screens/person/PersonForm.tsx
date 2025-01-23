@@ -13,7 +13,7 @@ const PersonForm = ({ route, navigation }) => {
         if (!personId) return;
         setLoading(true);
         try {
-            const response = await fetch(`http://localhost:8080/persons/${personId}`);
+            const response = await fetch(`http://localhost:8000/api/persons/${personId}`);
             if (response.ok) {
                 const person = await response.json();
                 setValue('name', person.name);
@@ -28,18 +28,22 @@ const PersonForm = ({ route, navigation }) => {
         }
     };
 
+    // Busca dados para edição
     useEffect(() => {
         fetchPerson();
     }, [personId]);
 
+    // Função para salvar ou atualizar a pessoa
     const onSubmit = async (data) => {
         try {
             const url = personId
-                ? `http://localhost:8080/persons/${personId}`
-                : 'http://localhost:8080/persons';
-
+                ? `http://localhost:8000/api/persons/${personId}`
+                : 'http://localhost:8000/api/persons';
             const method = personId ? 'PUT' : 'POST';
-            data.document = data.document.replace(/[^0-9]/g, '')
+
+            // Remove a máscara do CPF antes de enviar para a API
+            data.document = data.document.replace(/\D/g, '');
+
             const response = await fetch(url, {
                 method,
                 headers: {
@@ -55,7 +59,7 @@ const PersonForm = ({ route, navigation }) => {
                     : `Pessoa cadastrada: ${result.name}`;
                 Alert.alert('Sucesso', message);
                 reset();
-                navigation.goBack();
+                navigation.goBack(); // Volta para a lista
             } else {
                 const error = await response.json();
                 Alert.alert('Erro', error.detail || 'Erro ao salvar os dados.');
@@ -65,6 +69,7 @@ const PersonForm = ({ route, navigation }) => {
         }
     };
 
+    // Exibe indicador de carregamento enquanto busca os dados
     if (loading) {
         return (
             <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
@@ -103,17 +108,17 @@ const PersonForm = ({ route, navigation }) => {
                 {errors.name && <Text style={{ color: '#EF4444', fontSize: 12 }}>{errors.name.message}</Text>}
             </View>
 
-            {/* Documento */}
+            {/* Documento (CPF) */}
             <View style={{ marginBottom: 16 }}>
-                <Text style={{ fontSize: 14, fontWeight: '600', marginBottom: 8 }}>Documento</Text>
+                <Text style={{ fontSize: 14, fontWeight: '600', marginBottom: 8 }}>Documento (CPF)</Text>
                 <Controller
                     control={control}
                     name="document"
                     rules={{ required: "Documento é obrigatório" }}
                     render={({ field: { onChange, value } }) => (
                         <TextInputMask
-                            type={'cpf'}
-                            placeholder="CPF"
+                            type="cpf"
+                            placeholder="Digite o CPF"
                             value={value}
                             onChangeText={onChange}
                             style={{

@@ -9,6 +9,7 @@ import PersonForm from 'screens/person/PersonForm';
 import PersonList from 'screens/person/PersonList';
 import ProductForm from 'screens/product/ProductForm';
 import ProductList from 'screens/product/ProductList';
+import ImportCSVScreen from 'screens/ImportCSVScreen'
 
 export type RootStackParamList = {
   Login: undefined;
@@ -19,6 +20,7 @@ export type RootStackParamList = {
   PersonList: undefined;
   ProductForm: { id?: string }; 
   ProductList: undefined;
+  ImportCSVScreen: undefined;
   Logs: undefined;
 };
 
@@ -27,8 +29,7 @@ const Stack = createStackNavigator<RootStackParamList>();
 export default function RootStack() {
   return (
     <NavigationContainer>
-      <Stack.Navigator initialRouteName="Login">
-        <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
+      <Stack.Navigator initialRouteName="Home">        
         <Stack.Screen name="Home" component={HomeScreen} options={{ headerShown: false }} />
 
         {/* Área */}
@@ -45,6 +46,9 @@ export default function RootStack() {
 
         {/* Logs */}
         <Stack.Screen name="Logs" component={LogsScreen} options={{ title: 'Logs' }} />
+        
+        {/* CSV */}
+        <Stack.Screen name="ImportCSV" component={ImportCSVScreen} options={{ title: 'Importar' }} />
       </Stack.Navigator>
     </NavigationContainer>
   );

@@ -7,18 +7,19 @@ const ProductForm = ({ route, navigation }) => {
     const { control, handleSubmit, setValue, formState: { errors }, reset } = useForm();
     const [loading, setLoading] = useState(false);
 
-    // Função para buscar os dados do produto
+    // Função para salvar ou atualizar o produto
     const fetchProduct = async () => {
         if (!productId) return;
         setLoading(true);
         try {
-            const response = await fetch(`http://localhost:8080/products/${productId}`);
+            const response = await fetch(`http://localhost:8000/api/products/${productId}`);
             if (response.ok) {
                 const product = await response.json();
-                setValue('nome', product.nome);
-                setValue('descricao', product.descricao);
-                setValue('codigo', product.codigo);
-                setValue('marca', product.marca);
+                // Preenche os valores no formulário
+                setValue('name', product.name);
+                setValue('description', product.description);
+                setValue('code', product.code);
+                setValue('brand', product.brand);
             } else {
                 Alert.alert('Erro', 'Não foi possível carregar os dados do produto.');
             }
@@ -29,16 +30,11 @@ const ProductForm = ({ route, navigation }) => {
         }
     };
 
-    // Chama fetchProduct quando o component for montado
-    useEffect(() => {
-        fetchProduct();
-    }, [productId]);
-
     const onSubmit = async (data) => {
         try {
             const url = productId
-                ? `http://localhost:8080/products/${productId}`
-                : 'http://localhost:8080/products';
+                ? `http://localhost:8000/api/products/${productId}`
+                : 'http://localhost:8000/api/products';
             const method = productId ? 'PUT' : 'POST';
 
             const response = await fetch(url, {
@@ -52,19 +48,24 @@ const ProductForm = ({ route, navigation }) => {
             if (response.ok) {
                 const result = await response.json();
                 const message = productId
-                    ? `Produto atualizado: ${result.nome}`
-                    : `Produto cadastrado: ${result.nome}`;
+                    ? `Produto atualizado: ${result.name}`
+                    : `Produto cadastrado: ${result.name}`;
                 Alert.alert('Sucesso', message);
                 reset();
                 navigation.goBack();
             } else {
                 const error = await response.json();
-                Alert.alert('Erro', error.detail || 'Erro ao salvar os dados.');
+                Alert.alert('Erro', error.message || 'Erro ao salvar os dados.');
             }
         } catch (error) {
             Alert.alert('Erro', 'Não foi possível se conectar ao servidor.');
         }
     };
+
+    // Chama fetchProduct quando o componente for montado
+    useEffect(() => {
+        fetchProduct();
+    }, [productId]);
 
     if (loading) {
         return (
@@ -85,7 +86,7 @@ const ProductForm = ({ route, navigation }) => {
                 <Text style={{ fontSize: 14, fontWeight: '600', marginBottom: 8 }}>Nome</Text>
                 <Controller
                     control={control}
-                    name="nome"
+                    name="name"
                     rules={{ required: "Nome é obrigatório" }}
                     render={({ field: { onChange, value } }) => (
                         <TextInput
@@ -109,7 +110,7 @@ const ProductForm = ({ route, navigation }) => {
                 <Text style={{ fontSize: 14, fontWeight: '600', marginBottom: 8 }}>Descrição</Text>
                 <Controller
                     control={control}
-                    name="descricao"
+                    name="description"
                     render={({ field: { onChange, value } }) => (
                         <TextInput
                             placeholder="Descrição do Produto"
@@ -131,7 +132,7 @@ const ProductForm = ({ route, navigation }) => {
                 <Text style={{ fontSize: 14, fontWeight: '600', marginBottom: 8 }}>Código</Text>
                 <Controller
                     control={control}
-                    name="codigo"
+                    name="code"
                     rules={{ required: "Código é obrigatório" }}
                     render={({ field: { onChange, value } }) => (
                         <TextInput
@@ -155,7 +156,7 @@ const ProductForm = ({ route, navigation }) => {
                 <Text style={{ fontSize: 14, fontWeight: '600', marginBottom: 8 }}>Marca</Text>
                 <Controller
                     control={control}
-                    name="marca"
+                    name="brand"
                     render={({ field: { onChange, value } }) => (
                         <TextInput
                             placeholder="Marca do Produto"
