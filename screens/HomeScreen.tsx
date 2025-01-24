@@ -9,11 +9,11 @@ const HomeScreen = () => {
             <View className="flex-1 items-center justify-center">
                 <Image
                     source={require('assets/logo.png')} // Caminho da logo
-                    style={{ width: 150, height: 150, marginBottom: 16 }}
+                    style={{ width: 450, height: 450, marginBottom: 16 }}
                     resizeMode="contain"
                 />
                 <Text className="text-lg font-bold text-gray-700">
-                    Bem-vindo à Home!
+                    Bem-vindo ao Gestor de Inventários RFID!
                 </Text>
             </View>
         </View>

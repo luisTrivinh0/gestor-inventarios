@@ -18,11 +18,11 @@ const Menu = [
         icon: "book",
         route: "ImportCSV",
     },
-    {
-        title: "Sair",
-        icon: "exit-outline",
-        route: "Login",
-    },
+    // {
+    //     title: "Sair",
+    //     icon: "exit-outline",
+    //     route: "Login",
+    // },
 ];
 
 export default Menu
